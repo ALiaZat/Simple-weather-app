@@ -1,61 +1,41 @@
 const path = require('path');
 const express = require('express');
 const hbs = require('hbs');
-const { rejects } = require('assert');
-
+const request = require('postman-request');
 const app = express();
 const port = process.env.PORT || 3000;
-
-const publicPath = path.join(__dirname, '../public')
 const viewsPath = path.join(__dirname, '../templates/views')
 const partialsPath = path.join(__dirname, '../templates/partials')
+
+// get the weather api :)
+const url = 'https://api.openweathermap.org/data/2.5/weather?lat=31.5326&lon=35.0998&appid=b79529712f1c0691e6afae708aff98b8';
+let weatherData;
+request(url, function(error, response) {
+    console.log('error:', error); 
+    weatherData = JSON.parse(response.body);
+});
+
+app.use(express.static('Images'));
 
 app.set('view engine', 'hbs');
 app.set('views', viewsPath)
 hbs.registerPartials(partialsPath)
 
-app.use(express.static(publicPath))
 
-app.get('', (req, res) => {
-    res.render('index', {
-        title: 'Welcome to Home!',
-        body: 'This is my express web app!'
-    });
+app.get('/' , (req, res) => {
+    res.render('home')
 });
 
-app.get('/about', (req, res) => {
-    res.render('about', {
-        title: 'Welcome to About!'
-    });
+app.get('/about' , (req, res) => {
+    res.render('about')
 });
 
-
-app.get('/books/:cat', (req, res) => {
-
-    if (!req.query.id) {
-        return res.send({
-            error: 'Id is not provided!'
-        })
-    }
-    
-    console.log(req.params);
-
-    res.send({books: [
-        {id: 321, name: 'I like Math', cat: 'Math'}
-    ]})
-})
-
-// app.get('/help', (req, res) => {
-//     res.send([{
-//         name: 'ahmad',
-//         email: 'ahamd@example.com'
-//     },
-//     {
-//         name: 'ahmads',
-//         email: 'ahamds@example.com'
-//     }]);
-// });
-
+app.get('/weather' , (req, res) => {
+    res.render('weather', {
+        temp: Math.round(weatherData.main.temp - 273.15),
+        desc: weatherData.weather[0].description,
+    });
+});
 app.get('*', (req, res) => {
     res.render('404-error', {
         title: '404 error',
